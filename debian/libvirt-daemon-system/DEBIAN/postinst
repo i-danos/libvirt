@@ -1,0 +1,427 @@
+#!/bin/sh
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see https://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+. /usr/share/debconf/confmodule
+
+# Allocated UID and GID for libvirt-qemu
+LIBVIRT_QEMU_UID=64055
+LIBVIRT_QEMU_GID=64055
+
+add_users_groups()
+{
+    if ! getent group libvirt >/dev/null; then
+        addgroup --quiet --system libvirt
+    fi
+
+    if ! getent group kvm >/dev/null; then
+        addgroup --quiet --system kvm
+    fi
+    # user and group libvirt runs qemu/kvm instances with
+    if ! getent passwd libvirt-qemu >/dev/null; then
+
+        # set uid if available (expected); don't fail otherwise.
+        PARAMETER_UID=''
+        if ! getent passwd $LIBVIRT_QEMU_UID >/dev/null; then
+            PARAMETER_UID="--uid $LIBVIRT_QEMU_UID"
+        fi
+
+        adduser --quiet \
+                --system \
+                --ingroup kvm \
+                --quiet \
+                --disabled-login \
+                --disabled-password \
+                --home /var/lib/libvirt \
+                --no-create-home \
+                --gecos "Libvirt Qemu" \
+                $PARAMETER_UID \
+                libvirt-qemu
+    fi
+    if ! getent group libvirt-qemu >/dev/null; then
+
+        # set gid if available (expected); don't fail otherwise.
+        PARAMETER_GID=''
+        if ! getent group $LIBVIRT_QEMU_GID >/dev/null; then
+            PARAMETER_GID="--gid $LIBVIRT_QEMU_GID"
+        fi
+
+        addgroup --quiet --system $PARAMETER_GID libvirt-qemu
+        adduser --quiet libvirt-qemu libvirt-qemu
+    fi
+}
+
+add_statoverrides()
+{
+    ROOT_DIRS="\
+        /var/lib/libvirt/images/ \
+        /var/lib/libvirt/boot/ \
+        /var/cache/libvirt/ \
+    "
+
+    QEMU_DIRS="\
+         /var/lib/libvirt/qemu/ \
+         /var/cache/libvirt/qemu/ \
+         /var/lib/libvirt/qemu/channel/ \
+         /var/lib/libvirt/qemu/channel/target/ \
+    "
+
+    SANLOCK_DIR="/var/lib/libvirt/sanlock"
+
+    QEMU_CONF="/etc/libvirt/qemu.conf"
+
+    for dir in ${ROOT_DIRS}; do
+        if ! dpkg-statoverride --list "${dir}" >/dev/null 2>&1; then
+            [ ! -e "${dir}" ] || chown root:root "${dir}"
+            [ ! -e "${dir}" ] || chmod 0711 "${dir}"
+        fi
+    done
+
+    for dir in ${QEMU_DIRS}; do
+        if ! dpkg-statoverride --list "${dir}" >/dev/null 2>&1; then
+            [ ! -e "${dir}" ] || chown libvirt-qemu:libvirt-qemu "${dir}"
+            [ ! -e "${dir}" ] || chmod 0750 "${dir}"
+        fi
+    done
+
+    if ! dpkg-statoverride --list "${SANLOCK_DIR}" >/dev/null 2>&1; then
+        [ ! -e "${SANLOCK_DIR}" ] || chown root:root "${SANLOCK_DIR}"
+        [ ! -e "${SANLOCK_DIR}" ] || chmod 0700 "${SANLOCK_DIR}"
+    fi
+
+    if ! dpkg-statoverride --list "${QEMU_CONF}" >/dev/null 2>&1; then
+        [ ! -e "${QEMU_CONF}" ] || chown root:root "${QEMU_CONF}"
+        [ ! -e "${QEMU_CONF}" ] || chmod 0600 "${QEMU_CONF}"
+    fi
+}
+
+case "$1" in
+    configure)
+        add_users_groups
+        add_statoverrides
+
+        # Make sure the directories don't get removed on package removal since
+        # logrotate chokes otherwise.
+        for dir in qemu uml lxc; do
+            touch /var/log/libvirt/"${dir}"/.placeholder
+        done
+        # Remove left over empty directory from pre 1.2.7
+        [ ! -d /etc/apparmor.d/libvirtd ] || rmdir --ignore-fail-on-non-empty /etc/apparmor.d/libvirtd
+
+        # Force virtlogd and virtlockd to reexec if enabled
+        if [ -d /run/systemd/system ]; then
+            if systemctl is-active -q virtlogd; then
+                systemctl reload virtlogd
+            fi
+            if systemctl is-active -q virtlockd; then
+                systemctl reload virtlockd
+            fi
+        fi
+
+        # Force refresh of capabilities (#731815)
+        rm -f /var/cache/libvirt/qemu/capabilities/*.xml
+
+        # dh_apparmor can't work with dir/file profile filenames yet (#979500)
+        # Also we don't want the reload section of dh_apparmor. Just the
+        # install of an empty include.
+        ABSTRACTIONS_DIR="/etc/apparmor.d/abstractions"
+        LOCAL_ABSTRACTIONS_DIR="/etc/apparmor.d/local/abstractions"
+        LIBVIRT_ABSTRACTIONS="libvirt-lxc libvirt-qemu"
+
+        for name in $LIBVIRT_ABSTRACTIONS; do
+            abstraction="$ABSTRACTIONS_DIR/$name"
+            local_abstraction="$LOCAL_ABSTRACTIONS_DIR/$name"
+
+            if [ -e "$abstraction" ] && [ ! -e "$local_abstraction" ]; then
+                mkdir -p "$LOCAL_ABSTRACTIONS_DIR"
+                install -m 0644 /dev/null "$local_abstraction"
+            fi
+        done
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+db_stop
+
+# Automatically added by dh_apparmor/4.1.0-1
+if [ "$1" = "configure" ]; then
+    APP_PROFILE="/etc/apparmor.d/usr.lib.libvirt.virt-aa-helper"
+    if [ -f "$APP_PROFILE" ]; then
+        # Add the local/ include
+        LOCAL_APP_PROFILE="/etc/apparmor.d/local/usr.lib.libvirt.virt-aa-helper"
+
+        test -e "$LOCAL_APP_PROFILE" || {
+            mkdir -p `dirname "$LOCAL_APP_PROFILE"`
+            install --mode 644 /dev/null "$LOCAL_APP_PROFILE"
+        }
+
+        # Reload the profile, including any abstraction updates
+        if aa-enabled --quiet 2>/dev/null; then
+            apparmor_parser -r -T -W "$APP_PROFILE" || true
+        fi
+    fi
+fi
+# End automatically added section
+# Automatically added by dh_apparmor/4.1.0-1
+if [ "$1" = "configure" ]; then
+    APP_PROFILE="/etc/apparmor.d/usr.sbin.libvirtd"
+    if [ -f "$APP_PROFILE" ]; then
+        # Add the local/ include
+        LOCAL_APP_PROFILE="/etc/apparmor.d/local/usr.sbin.libvirtd"
+
+        test -e "$LOCAL_APP_PROFILE" || {
+            mkdir -p `dirname "$LOCAL_APP_PROFILE"`
+            install --mode 644 /dev/null "$LOCAL_APP_PROFILE"
+        }
+
+        # Reload the profile, including any abstraction updates
+        if aa-enabled --quiet 2>/dev/null; then
+            apparmor_parser -r -T -W "$APP_PROFILE" || true
+        fi
+    fi
+fi
+# End automatically added section
+# Automatically added by dh_installdeb/13.24.2
+dpkg-maintscript-helper rm_conffile /etc/init.d/libvirt-guests 5.6.0-3\~ libvirt-daemon-system -- "$@"
+dpkg-maintscript-helper rm_conffile /etc/init.d/libvirtd 5.6.0-3\~ libvirt-daemon-system -- "$@"
+dpkg-maintscript-helper rm_conffile /etc/init.d/virtlogd 5.6.0-3\~ libvirt-daemon-system -- "$@"
+dpkg-maintscript-helper rm_conffile /etc/logrotate.d/libvirtd.uml 5.0.0-2\~ -- "$@"
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'libvirtd.service' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'libvirtd.service'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'libvirtd.service' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'libvirtd.service' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	if [ -d /run/systemd/system ]; then
+		systemctl --system daemon-reload >/dev/null || true
+		if [ -n "$2" ]; then
+			_dh_action=restart
+		else
+			_dh_action=start
+		fi
+		deb-systemd-invoke $_dh_action 'libvirtd.service' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'libvirt-guests.service' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'libvirt-guests.service'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'libvirt-guests.service' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'libvirt-guests.service' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'virtlockd.service' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'virtlockd.service'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'virtlockd.service' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'virtlockd.service' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'virtlogd.service' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'virtlogd.service'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'virtlogd.service' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'virtlogd.service' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	if [ -z "$DPKG_ROOT" ] && [ -d /run/systemd/system ]; then
+		systemctl --system daemon-reload >/dev/null || true
+		deb-systemd-invoke start 'libvirt-guests.service' 'virtlockd.service' 'virtlogd.service' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'libvirtd-admin.socket' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'libvirtd-admin.socket'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'libvirtd-admin.socket' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'libvirtd-admin.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'libvirtd-ro.socket' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'libvirtd-ro.socket'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'libvirtd-ro.socket' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'libvirtd-ro.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'libvirtd.socket' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'libvirtd.socket'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'libvirtd.socket' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'libvirtd.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'virtlockd-admin.socket' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'virtlockd-admin.socket'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'virtlockd-admin.socket' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'virtlockd-admin.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'virtlockd.socket' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'virtlockd.socket'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'virtlockd.socket' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'virtlockd.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'virtlogd-admin.socket' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'virtlogd-admin.socket'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'virtlogd-admin.socket' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'virtlogd-admin.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# The following line should be removed in trixie or trixie+1
+	deb-systemd-helper unmask 'virtlogd.socket' >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled 'virtlogd.socket'; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable 'virtlogd.socket' >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state 'virtlogd.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	if [ -z "$DPKG_ROOT" ] && [ -d /run/systemd/system ]; then
+		systemctl --system daemon-reload >/dev/null || true
+		deb-systemd-invoke start 'libvirtd-admin.socket' 'libvirtd-ro.socket' 'libvirtd.socket' 'virtlockd-admin.socket' 'virtlockd.socket' 'virtlogd-admin.socket' 'virtlogd.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+
+
+exit 0

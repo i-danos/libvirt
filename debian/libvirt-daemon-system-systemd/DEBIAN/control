@@ -1,0 +1,20 @@
+Package: libvirt-daemon-system-systemd
+Source: libvirt
+Version: 7.0.0-3
+Architecture: all
+Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
+Installed-Size: 78
+Depends: systemd-container, systemd-sysv
+Conflicts: libvirt-daemon-system-sysv
+Section: admin
+Priority: optional
+Homepage: https://libvirt.org/
+Description: Libvirt daemon configuration files (systemd)
+ Libvirt is a C toolkit to interact with the virtualization capabilities
+ of recent versions of Linux (and other OSes). The library aims at providing
+ a long term stable C API for different virtualization mechanisms. It currently
+ supports QEMU, KVM, XEN, OpenVZ, LXC, and VirtualBox.
+ .
+ This package contains the dependencies to make libvirt work with systemd.
+ (this is the default). This package is useless without the
+ libvirt-daemon-system package installed.

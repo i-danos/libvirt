@@ -1,0 +1,13 @@
+Package: libnss-libvirt-dbgsym
+Source: libvirt
+Version: 7.0.0-3
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
+Installed-Size: 55
+Depends: libnss-libvirt (= 7.0.0-3)
+Section: debug
+Priority: optional
+Multi-Arch: same
+Description: debug symbols for libnss-libvirt
+Build-Ids: 45605d44c7b4a9abaa0e961ecd7b0a7403d8ad66 75ae1cdf2a8a644d6083f2fbf143744e76d2b700

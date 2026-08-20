@@ -1,0 +1,70 @@
+# Automatically added by dh_installdeb/13.24.2
+dpkg-maintscript-helper rm_conffile /etc/init.d/libvirt-guests 5.6.0-3\~ libvirt-daemon-system -- "$@"
+dpkg-maintscript-helper rm_conffile /etc/init.d/libvirtd 5.6.0-3\~ libvirt-daemon-system -- "$@"
+dpkg-maintscript-helper rm_conffile /etc/init.d/virtlogd 5.6.0-3\~ libvirt-daemon-system -- "$@"
+dpkg-maintscript-helper rm_conffile /etc/logrotate.d/libvirtd.uml 5.0.0-2\~ -- "$@"
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = remove ] && [ -d /run/systemd/system ] ; then
+	systemctl --system daemon-reload >/dev/null || true
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "purge" ]; then
+	if [ -x "/usr/bin/deb-systemd-helper" ]; then
+		deb-systemd-helper purge 'libvirtd-admin.socket' 'libvirtd-ro.socket' 'libvirtd.socket' 'virtlockd-admin.socket' 'virtlockd.socket' 'virtlogd-admin.socket' 'virtlogd.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = remove ] && [ -d /run/systemd/system ] ; then
+	systemctl --system daemon-reload >/dev/null || true
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "purge" ]; then
+	if [ -x "/usr/bin/deb-systemd-helper" ]; then
+		deb-systemd-helper purge 'libvirt-guests.service' 'virtlockd.service' 'virtlogd.service' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = remove ] && [ -d /run/systemd/system ] ; then
+	systemctl --system daemon-reload >/dev/null || true
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "purge" ]; then
+	if [ -x "/usr/bin/deb-systemd-helper" ]; then
+		deb-systemd-helper purge 'libvirtd.service' >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installdebconf/13.24.2
+if [ "$1" = purge ] && [ -e /usr/share/debconf/confmodule ]; then
+	. /usr/share/debconf/confmodule
+	db_purge
+fi
+# End automatically added section
+# Automatically added by dh_apparmor/4.1.0-1
+if [ "$1" = "purge" ] && ! [ -e "/etc/apparmor.d/usr.sbin.libvirtd" ] ; then
+    rm -f "/etc/apparmor.d/disable/usr.sbin.libvirtd" || true
+    rm -f "/etc/apparmor.d/force-complain/usr.sbin.libvirtd" || true
+    rm -f "/etc/apparmor.d/local/usr.sbin.libvirtd" || true
+    rm -f /var/cache/apparmor/*/"usr.sbin.libvirtd" || true
+    rmdir /etc/apparmor.d/disable 2>/dev/null || true
+    rmdir /etc/apparmor.d/local   2>/dev/null || true
+    rmdir /etc/apparmor.d         2>/dev/null || true
+fi
+# End automatically added section
+# Automatically added by dh_apparmor/4.1.0-1
+if [ "$1" = "purge" ] && ! [ -e "/etc/apparmor.d/usr.lib.libvirt.virt-aa-helper" ] ; then
+    rm -f "/etc/apparmor.d/disable/usr.lib.libvirt.virt-aa-helper" || true
+    rm -f "/etc/apparmor.d/force-complain/usr.lib.libvirt.virt-aa-helper" || true
+    rm -f "/etc/apparmor.d/local/usr.lib.libvirt.virt-aa-helper" || true
+    rm -f /var/cache/apparmor/*/"usr.lib.libvirt.virt-aa-helper" || true
+    rmdir /etc/apparmor.d/disable 2>/dev/null || true
+    rmdir /etc/apparmor.d/local   2>/dev/null || true
+    rmdir /etc/apparmor.d         2>/dev/null || true
+fi
+# End automatically added section

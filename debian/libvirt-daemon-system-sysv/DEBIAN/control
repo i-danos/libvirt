@@ -1,0 +1,24 @@
+Package: libvirt-daemon-system-sysv
+Source: libvirt
+Version: 7.0.0-3
+Architecture: all
+Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
+Installed-Size: 98
+Pre-Depends: init-system-helpers (>= 1.54~)
+Depends: lsb-base
+Breaks: libvirt-daemon-system (<< 5.6.0-4~)
+Replaces: libvirt-daemon-system (<< 5.6.0-4~)
+Section: admin
+Priority: optional
+Homepage: https://libvirt.org/
+Description: Libvirt daemon configuration files (sysv)
+ Libvirt is a C toolkit to interact with the virtualization capabilities
+ of recent versions of Linux (and other OSes). The library aims at providing
+ a long term stable C API for different virtualization mechanisms. It currently
+ supports QEMU, KVM, XEN, OpenVZ, LXC, and VirtualBox.
+ .
+ This package contains dependencies and init scripts to make libvirt work with
+ sysv based init systems. Using libvirt-daemon-systemd is preferred since the
+ init scripts are incomplete.
+ .
+ This package is useless without the libvirt-daemon-system package installed.

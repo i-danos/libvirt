@@ -1,0 +1,6 @@
+2ba419fe2082b22d2ee00ae0b7f7e9d6  usr/bin/virt-login-shell
+dcd7e3a44eef3cf6634eec92effbd75d  usr/lib/libvirt/virt-login-shell-helper
+3cddda8da0fe802c181d06712f1157a3  usr/share/doc/libvirt-login-shell/NEWS.gz
+be3cb825b594013f8fcc445c80bb5f74  usr/share/doc/libvirt-login-shell/changelog.Debian.gz
+ad07e7142dfbd690ea2a68a9b4de70be  usr/share/doc/libvirt-login-shell/copyright
+78d742abc49d6786ab40d12cdb52df24  usr/share/man/man1/virt-login-shell.1.gz

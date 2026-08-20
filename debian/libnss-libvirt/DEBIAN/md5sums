@@ -1,0 +1,5 @@
+57c22f5d2ba7b90de567a53a015e9dae  lib/x86_64-linux-gnu/libnss_libvirt.so.2
+25e0df34fd0668e8068067994ebfc79b  lib/x86_64-linux-gnu/libnss_libvirt_guest.so.2
+628d5aa2da372eddbf5bd5c9b5a8182a  usr/share/doc/libnss-libvirt/changelog.Debian.gz
+ad07e7142dfbd690ea2a68a9b4de70be  usr/share/doc/libnss-libvirt/copyright
+9c5808caaa02a3af1ca21fe872750c03  usr/share/lintian/overrides/libnss-libvirt

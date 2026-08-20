@@ -1,0 +1,3 @@
+/etc/init.d/libvirt-guests
+/etc/init.d/libvirtd
+/etc/init.d/virtlogd

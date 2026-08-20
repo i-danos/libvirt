@@ -41,7 +41,10 @@ ifneq (,$(findstring $(DEB_HOST_ARCH_OS), linux))
     WITH_LIBNL                = -Dlibnl=enabled
     WITH_NETWORK              = -Ddriver_network=enabled
     WITH_OPENVZ               = -Ddriver_openvz=enabled
-    WITH_NETCF                = -Dnetcf=enabled
+    # netcf was removed from Debian years ago (upstream deprecated it in
+    # favor of NetworkManager/systemd-networkd); libnetcf-dev doesn't exist
+    # in trixie.
+    WITH_NETCF                = -Dnetcf=disabled
     WITH_POLKIT               = -Dpolkit=enabled
     WITH_SANLOCK              = -Dsanlock=enabled
     WITH_INIT_SCRIPT          = -Dinit_script=systemd
@@ -211,7 +214,7 @@ override_dh_auto_install:
 
 	# Don't ship the CI dashboard, which is not useful as documentation
 	# triggers the privacy-breach-generic Lintian tag
-	rm $(DEB_DESTDIR)/usr/share/doc/libvirt/html/ci.html
+	rm -f $(DEB_DESTDIR)/usr/share/doc/libvirt/html/ci.html
 
 	# Disable network autostart
 	rm -rf $(DEB_DESTDIR)/etc/libvirt/qemu/networks/autostart/

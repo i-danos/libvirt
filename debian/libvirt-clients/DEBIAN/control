@@ -1,0 +1,20 @@
+Package: libvirt-clients
+Source: libvirt
+Version: 7.0.0-3
+Architecture: amd64
+Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
+Installed-Size: 1106
+Depends: libvirt0 (= 7.0.0-3), sensible-utils, libc6 (>= 2.34), libgcc-s1 (>= 3.3.1), libglib2.0-0t64 (>= 2.28.0), libreadline8t64 (>= 6.0), libxml2 (>= 2.9.2+really2.9.1+dfsg1-0.2)
+Suggests: libvirt-daemon (= 7.0.0-3), libvirt-login-shell (= 7.0.0-3)
+Breaks: libvirt-daemon (<< 6.9.0-2~), libvirt-daemon-driver-qemu (<< 6.9.0-2~)
+Replaces: libvirt-daemon (<< 6.9.0-2~)
+Section: admin
+Priority: optional
+Homepage: https://libvirt.org/
+Description: Programs for the libvirt library
+ Libvirt is a C toolkit to interact with the virtualization capabilities
+ of recent versions of Linux (and other OSes). The library aims at providing
+ a long term stable C API for different virtualization mechanisms. It currently
+ supports QEMU, KVM, XEN, OpenVZ, LXC, and VirtualBox.
+ .
+ This package contains the libvirt shell virsh and other client binaries.

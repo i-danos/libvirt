@@ -1,0 +1,12 @@
+Package: libvirt-daemon-driver-lxc-dbgsym
+Source: libvirt
+Version: 7.0.0-3
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
+Installed-Size: 648
+Depends: libvirt-daemon-driver-lxc (= 7.0.0-3)
+Section: debug
+Priority: optional
+Description: debug symbols for libvirt-daemon-driver-lxc
+Build-Ids: b4ecc518b09469310ab0f861f27ccc112c77b54c cc59d3cc938f1ed5a23388c130ca57f6f441143b

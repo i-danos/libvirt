@@ -1,0 +1,12 @@
+Package: libvirt-sanlock-dbgsym
+Source: libvirt
+Version: 7.0.0-3
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
+Installed-Size: 67
+Depends: libvirt-sanlock (= 7.0.0-3)
+Section: debug
+Priority: optional
+Description: debug symbols for libvirt-sanlock
+Build-Ids: 030cb44dbf13d7d0a2cde5720a2acc6c784a1e08 526ac39451a4c7d678013518f0963bea6e69ad8e

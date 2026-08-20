@@ -1,0 +1,12 @@
+Package: libvirt-daemon-driver-storage-gluster-dbgsym
+Source: libvirt
+Version: 7.0.0-3
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
+Installed-Size: 70
+Depends: libvirt-daemon-driver-storage-gluster (= 7.0.0-3)
+Section: debug
+Priority: optional
+Description: debug symbols for libvirt-daemon-driver-storage-gluster
+Build-Ids: 163431513a6a971c032810d0a1b4631bef1b23cd de58bdd8338e44cda9bdf2de7f315142851c601c
