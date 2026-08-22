@@ -1,7 +1,0 @@
-a451634a79a0847650a9c8183d53f33b  usr/lib/libvirt/libvirt_lxc
-033bf0b0d98746c4dc008943b32d4fc5  usr/lib/x86_64-linux-gnu/libvirt/connection-driver/libvirt_driver_lxc.so
-a5005b50cfc2763f02734888ad849a9d  usr/share/augeas/lenses/libvirtd_lxc.aug
-daddb80dfff7d59c71fd7fe9167d8747  usr/share/augeas/lenses/tests/test_libvirtd_lxc.aug
-3cddda8da0fe802c181d06712f1157a3  usr/share/doc/libvirt-daemon-driver-lxc/NEWS.gz
-13a293cded451edbf94f35b5ed971bb7  usr/share/doc/libvirt-daemon-driver-lxc/changelog.Debian.gz
-ad07e7142dfbd690ea2a68a9b4de70be  usr/share/doc/libvirt-daemon-driver-lxc/copyright

@@ -1,7 +1,0 @@
-73db65bd0b130ca40005859097b3b8f1  usr/lib/libvirt/libvirt_sanlock_helper
-a8d3b8c3551d8a90353efad12dedd658  usr/lib/x86_64-linux-gnu/libvirt/lock-driver/sanlock.so
-b88c9b7f3dff2da32bc2ab5f24e7ec5e  usr/sbin/virt-sanlock-cleanup
-3cddda8da0fe802c181d06712f1157a3  usr/share/doc/libvirt-sanlock/NEWS.gz
-03430964dcf955f25fc3227f76c486f8  usr/share/doc/libvirt-sanlock/changelog.Debian.gz
-ad07e7142dfbd690ea2a68a9b4de70be  usr/share/doc/libvirt-sanlock/copyright
-a53f6a3b6186ab14eb5589df72d97eb2  usr/share/man/man8/virt-sanlock-cleanup.8.gz

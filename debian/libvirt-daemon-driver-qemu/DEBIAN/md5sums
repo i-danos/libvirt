@@ -1,8 +1,0 @@
-6f17d58ed4b7e9a1a0ff9527ae000c98  usr/bin/virt-qemu-run
-c5c4b914804104462e3bc21090c327d0  usr/lib/x86_64-linux-gnu/libvirt/connection-driver/libvirt_driver_qemu.so
-fd882edbc5de1710d0dba7d961c7e174  usr/share/augeas/lenses/libvirtd_qemu.aug
-c852a043d5f05766902e089b2af28832  usr/share/augeas/lenses/tests/test_libvirtd_qemu.aug
-3cddda8da0fe802c181d06712f1157a3  usr/share/doc/libvirt-daemon-driver-qemu/NEWS.gz
-1c5c2276bfe959247b54c18825eb47d1  usr/share/doc/libvirt-daemon-driver-qemu/changelog.Debian.gz
-ad07e7142dfbd690ea2a68a9b4de70be  usr/share/doc/libvirt-daemon-driver-qemu/copyright
-55c44404ca40c5b9d548cbe1439c9306  usr/share/man/man1/virt-qemu-run.1.gz

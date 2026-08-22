@@ -1,6 +1,0 @@
-51ee9d50da2f8e8565983c8f376b69e3  usr/lib/x86_64-linux-gnu/libvirt/connection-driver/libvirt_driver_libxl.so
-d0d5843f1082a3e788fd1d3e68b17612  usr/share/augeas/lenses/libvirtd_libxl.aug
-3562ce4c7aa5446c6753a3be72f0eda1  usr/share/augeas/lenses/tests/test_libvirtd_libxl.aug
-3cddda8da0fe802c181d06712f1157a3  usr/share/doc/libvirt-daemon-driver-xen/NEWS.gz
-fd66a03c11d7b8a37ec664e0349ce073  usr/share/doc/libvirt-daemon-driver-xen/changelog.Debian.gz
-ad07e7142dfbd690ea2a68a9b4de70be  usr/share/doc/libvirt-daemon-driver-xen/copyright

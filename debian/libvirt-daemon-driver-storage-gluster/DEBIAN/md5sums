@@ -1,5 +1,0 @@
-192bf97a85d032a7b69b7a71e466be64  usr/lib/x86_64-linux-gnu/libvirt/storage-backend/libvirt_storage_backend_gluster.so
-b29a2ceb53f80482706ea431369e97a6  usr/lib/x86_64-linux-gnu/libvirt/storage-file/libvirt_storage_file_gluster.so
-3cddda8da0fe802c181d06712f1157a3  usr/share/doc/libvirt-daemon-driver-storage-gluster/NEWS.gz
-d0fa54c3340170e5dd1836e3a84d8bb5  usr/share/doc/libvirt-daemon-driver-storage-gluster/changelog.Debian.gz
-ad07e7142dfbd690ea2a68a9b4de70be  usr/share/doc/libvirt-daemon-driver-storage-gluster/copyright

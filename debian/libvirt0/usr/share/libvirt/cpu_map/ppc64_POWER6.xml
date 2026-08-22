@@ -1,6 +1,0 @@
-<cpus>
-  <model name='POWER6'>
-    <vendor name='IBM'/>
-    <pvr value='0x003e0000' mask='0xffff0000'/>
-  </model>
-</cpus>
