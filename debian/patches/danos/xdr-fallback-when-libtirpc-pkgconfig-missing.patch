@@ -1,0 +1,40 @@
+From: DANOS <noreply@danos.io>
+Date: Mon, 28 Sep 2026 07:00:00 +0800
+Subject: meson: fall back to a manual libtirpc probe if pkg-config misses it
+
+Debian's own Revert-m4-virt-xdr-rewrite-XDR-check.patch used to force
+xdr_dep to an empty declare_dependency() on Linux, working around a
+glibc 2.31 bug where headers came from libtirpc but symbols resolved
+against glibc's own (then still present) obsolete Sun RPC compat
+symbols, producing bad linking. That revert is now dropped: current
+glibc (2.41 here) has removed rpc/rpc.h and the obsolete RPC symbols
+entirely, so the double-linking risk the revert guarded against no
+longer exists, and Debian:13/standard's build root fails outright on
+`#include <rpc/rpc.h>` without libtirpc.
+
+dependency('libtirpc', required: false) should find libtirpc-dev's
+pkg-config file. If it does not, for whatever reason, try a direct
+header/library probe before giving up, since libtirpc's non-standard
+include prefix (/usr/include/tirpc) is the one thing a bare pkg-config
+miss cannot recover from on its own -- this keeps the failure at
+configure time (a clear message) instead of a much more confusing
+compile-time failure deep inside generated RPC code.
+---
+--- a/meson.build
++++ b/meson.build
+@@ -1431,6 +1431,15 @@
+   xdr_dep = cc.find_library('portablexdr', required: false)
+ elif host_machine.system() == 'linux'
+   xdr_dep = dependency('libtirpc', required: false)
++  if not xdr_dep.found()
++    tirpc_lib = cc.find_library('tirpc', required: false)
++    if tirpc_lib.found() and cc.has_header('rpc/rpc.h', args: '-I/usr/include/tirpc')
++      xdr_dep = declare_dependency(
++        dependencies: tirpc_lib,
++        include_directories: include_directories('/usr/include/tirpc'),
++      )
++    endif
++  endif
+ else
+   xdr_dep = declare_dependency()
+ endif
