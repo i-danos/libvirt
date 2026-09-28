@@ -177,7 +177,7 @@ override_dh_auto_configure:
 override_dh_auto_test:
 	export LD_PRELOAD=""; \
 	export VIR_TEST_DEBUG=1; \
-	if ! dh_auto_test -- --timeout-multiplier 10; then \
+	if ! meson test -C $(DEB_BUILDDIR) --timeout-multiplier 10; then \
 	    cat $(DEB_BUILDDIR)/meson-logs/testlog.txt; \
 	    exit 1; \
 	fi

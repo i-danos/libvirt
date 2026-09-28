@@ -1,3 +1,15 @@
+libvirt (7.0.0-3danos3) unstable; urgency=medium
+
+  * debian/rules override_dh_auto_test: invoke "meson test -C ... --timeout-
+    multiplier 10" directly instead of "dh_auto_test -- --timeout-multiplier
+    10". The latter's meson buildsystem handler ran "ninja test --timeout-
+    multiplier 10" -- passing a meson-test-only flag straight to ninja, which
+    doesn't understand it: "ninja: unrecognized option '--timeout-
+    multiplier'". Masked until 7.0.0-3danos2 fixed doc generation and the
+    build reached the test suite for the first time.
+
+ -- DANOS <noreply@danos.io>  Mon, 28 Sep 2026 08:30:00 +0800
+
 libvirt (7.0.0-3danos2) unstable; urgency=medium
 
   * docs/site.xsl: declare pagesrc and timestamp as top-level xsl:param, not
