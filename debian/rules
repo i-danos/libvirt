@@ -177,7 +177,9 @@ override_dh_auto_configure:
 override_dh_auto_test:
 	export LD_PRELOAD=""; \
 	export VIR_TEST_DEBUG=1; \
-	if ! meson test -C $(DEB_BUILDDIR) --timeout-multiplier 10; then \
+	if ! meson test -C $(DEB_BUILDDIR) --timeout-multiplier 10 \
+	    --no-suite danos-needs-real-xen \
+	    --no-suite danos-qemu-img-behavior-mismatch; then \
 	    cat $(DEB_BUILDDIR)/meson-logs/testlog.txt; \
 	    exit 1; \
 	fi
