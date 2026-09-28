@@ -11,3 +11,4 @@ debian/apparmor_profiles_local_include.patch
 debian/Set-defaults-for-zfs-tools.patch
 debian/Use-sensible-editor-by-default.patch
 danos/xdr-fallback-when-libtirpc-pkgconfig-missing.patch
+danos/docs-xslt-empty-name-and-missing-params.patch

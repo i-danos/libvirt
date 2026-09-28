@@ -1,0 +1,70 @@
+From: DANOS <noreply@danos.io>
+Date: Mon, 28 Sep 2026 08:00:00 +0800
+Subject: docs: fix two latent XSLT bugs exposed by the current xsltproc/libxslt
+
+Both were masked until the libtirpc fix (danos/xdr-fallback-when-
+libtirpc-pkgconfig-missing.patch) let the build reach doc generation
+for the first time on this toolchain; verified locally afterward
+against all 73 docs/*.html.in pages, 0 failures.
+
+1) docs/site.xsl referenced $pagesrc and $timestamp at global scope
+   (in the $href_base variable, and in <xsl:with-param select="$pagesrc"/>)
+   without ever declaring them as top-level xsl:param -- they were only
+   ever declared as local params on page.xsl's "page"-mode template.
+   xsltproc's --stringparam pagesrc/--stringparam timestamp (see
+   docs/meson.build) has nothing to bind to without a matching top-level
+   xsl:param, leaving the global references undefined.
+
+2) docs/page.xsl's text(), comment()|processing-instruction() and node()
+   templates in mode="copy" are all "kind test" patterns, which XSLT
+   gives the same default priority (-0.5). Which one wins a tie on a
+   text/comment/PI node is then processor-defined, not spec-guaranteed.
+   This build's xsltproc resolved the tie by dispatching text nodes into
+   node()'s xsl:element branch instead, where name() of a text node is
+   empty: "xsl:element: The effective name '' is not a valid QName."
+   Giving the two more specific templates an explicit priority="1"
+   removes the ambiguity outright, on any processor.
+---
+--- a/docs/site.xsl
++++ b/docs/site.xsl
+@@ -13,6 +13,14 @@
+     encoding="UTF-8"
+     indent="yes"/>
+
++  <!-- Bound by xsltproc's stringparam options pagesrc and timestamp (see
++       docs/meson.build). Referenced below at global scope (in $href_base) and
++       passed on to page.xsl's "page"-mode template, so they must be declared
++       as top-level params here too, not only as that template's own local
++       params. -->
++  <xsl:param name="pagesrc"/>
++  <xsl:param name="timestamp"/>
++
+   <xsl:variable name="href_base">
+     <xsl:choose>
+       <xsl:when test="$pagesrc = 'docs/404.html.in'">
+--- a/docs/page.xsl
++++ b/docs/page.xsl
+@@ -209,10 +209,22 @@
+     </xsl:element>
+   </xsl:template>
+
+-  <xsl:template match="text()" mode="copy">
++  <!-- text(), comment()|processing-instruction() and node() below are all
++       "kind test" patterns, which XSLT gives the same default priority
++       (-0.5); which one wins a tie on a text/comment/PI node is then
++       processor-defined, not spec-guaranteed. Give the more specific ones an
++       explicit higher priority so a text node can no longer be dispatched to
++       node()'s xsl:element branch, where name() of a text node is empty and
++       xsltproc (unlike whatever this was last verified against) errors on
++       it: "xsl:element: The effective name '' is not a valid QName." -->
++  <xsl:template match="text()" mode="copy" priority="1">
+     <xsl:value-of select="."/>
+   </xsl:template>
+
++  <xsl:template match="comment()|processing-instruction()" mode="copy" priority="1">
++    <xsl:copy/>
++  </xsl:template>
++
+   <xsl:template match="node()" mode="copy">
+     <xsl:element name="{name()}">
+       <xsl:copy-of select="./@*"/>

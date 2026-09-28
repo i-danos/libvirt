@@ -1,3 +1,25 @@
+libvirt (7.0.0-3danos2) unstable; urgency=medium
+
+  * docs/site.xsl: declare pagesrc and timestamp as top-level xsl:param, not
+    only as the "page"-mode template's own local params. site.xsl's global
+    $href_base variable and its <xsl:with-param select="$pagesrc"/> both
+    reference them at global scope, where they were otherwise undefined --
+    xsltproc's --stringparam pagesrc/timestamp (see docs/meson.build) has
+    nothing to bind to without this.
+  * docs/page.xsl: give the text() and comment()|processing-instruction()
+    templates in mode="copy" priority="1". They and the generic node()
+    fallback template are all "kind test" patterns, which XSLT gives the same
+    default priority (-0.5); on a tie, which one actually matches a text node
+    is processor-defined, not spec-guaranteed. This build's xsltproc resolved
+    the tie the other way, dispatching text nodes to node()'s xsl:element
+    branch, where name() of a text node is empty:
+    "xsl:element: The effective name '' is not a valid QName."
+  * Both were masked until 7.0.0-3danos1 fixed the earlier libtirpc failure
+    and the build reached doc generation for the first time; verified
+    locally afterward against all 73 docs/*.html.in pages, 0 failures.
+
+ -- DANOS <noreply@danos.io>  Mon, 28 Sep 2026 08:00:00 +0800
+
 libvirt (7.0.0-3danos1) unstable; urgency=medium
 
   * Drop debian/Revert-m4-virt-xdr-rewrite-XDR-check.patch: it forced XDR to
